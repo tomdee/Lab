@@ -45,7 +45,7 @@ sub getCommandHash
 
     # Maps command barcodes onto routines
     my %commandHash = (
-        '000000084062' => \&sayHello,
+        '000000084062'  => \&sayHello,
         '9780719540158' => \&identifyPerson,
         '9780859340601' => \&removeLastEntry,
         '9780859344012' => \&whosInLab,
@@ -101,6 +101,12 @@ sub logAllOut
     #logout($person);
 }
 
+sub ignoreScan
+{
+#Do database lookup
+return false;
+}
+
 sub handleBarcode
 {
     my ($barcode)   = @_;
@@ -112,6 +118,16 @@ sub handleBarcode
 
         # Found a person
         say("Found a person");
+
+        if ignoreScan($barcode)
+{   
+say("Ignoring");
+return;
+}
+
+my $state = getState($barcode);
+
+
     }
     elsif ( $commandHash{$barcode} )
     {
