@@ -1,8 +1,13 @@
 use Device::SerialPort qw( :PARAM :STAT 0.07 );
 use strict;
 use warnings;
+use database;
+use Data::Dumper;
+
+print Dumper( database::getPersonList() );
 
 initSerial();
+
 open( PORT, "/dev/ttyUSB0" );
 
 my $currentString = "";
@@ -31,13 +36,15 @@ close PORT;
 #Return hash of barcodes to person ID
 sub getPeopleHash
 {
-    my %peopleHash = (
-        '1001' => '1',
-        '1002' => '2',
-        '1003' => '3',
-    );
+#    my %peopleHash = (
+#        '1001' => '1',
+#        '1002' => '2',
+#        '1003' => '3',
+#    );
+#
+#    return \%peopleHash;
+return database::getPersonList();
 
-    return \%peopleHash;
 }
 
 sub getCommandHash
@@ -103,8 +110,9 @@ sub logAllOut
 
 sub ignoreScan
 {
-#Do database lookup
-return false;
+
+    #Do database lookup
+    return 0;
 }
 
 sub handleBarcode
@@ -117,16 +125,16 @@ sub handleBarcode
     {
 
         # Found a person
-        say("Found a person");
+        say("Hello " . $peopleHash{$barcode});
 
-        if ignoreScan($barcode)
-{   
-say("Ignoring");
-return;
-}
+        if ( ignoreScan($barcode) )
+        {
+            say("Ignoring");
+            return;
+        }
 
-my $state = getState($barcode);
-
+        my $state = database::getState($barcode);
+say("State $state");
 
     }
     elsif ( $commandHash{$barcode} )
