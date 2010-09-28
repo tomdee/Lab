@@ -8,7 +8,8 @@ my $dbh;
 dbConnect();
 
 #print Dumper(getPersonFromCode("123456789"));
-#print Dumper(getWhosInLab());
+#print Dumper(getState("1000000000000"));
+flipState("5010123729981", 'IN');
 
 # Find the current state for a given barcode
 # IN:  a barcode
@@ -16,10 +17,46 @@ dbConnect();
 sub getState
 {
   my ($barcode) = @_;
-  my %person =  %{getPersonFromCode($barcode)};
-  my %log = %{getLastLogFromPersonId($person{"id"})};
+  my %person = %{getPersonFromCode($barcode)};
 
-  return $log{"action"};
+  my $query = <<SQL;
+select case when coalesce(o.timestamp, timestamp(0)) < i.timestamp then 'IN' else 'OUT' end as status
+from person as p
+join
+(
+	select max(i.timestamp) as timestamp
+	from person_log as i
+	where i.action = 'IN'
+	and i.person_id = $person{"id"}
+) as i on true
+left join
+(
+	select max(o.timestamp) as timestamp
+	from person_log as o
+	where o.action = 'OUT'
+	and o.person_id = $person{"id"}
+) as o on true
+where p.id = $person{"id"};
+SQL
+  my %result = %{dbQuerySingleRow($query)};
+  return $result{"status"};
+}
+
+# Toggle a user's state
+# IN:  the user barcode
+# OUT: none
+sub flipState
+{
+  my ($barcode, $state) = @_;
+  $state = getState($barcode);
+
+  my $query = <<SQL;
+insert into person_log (person_id, action)
+select p.id, case '$state' when 'IN' then 'OUT' else 'IN' end
+from person as p
+where p.barcode = '$barcode';
+SQL
+  $dbh->do($query);
 }
 
 
@@ -88,7 +125,16 @@ left join
 where coalesce(o.timestamp, timestamp(0)) < i.timestamp;
 SQL
 
-    return dbQueryManyRows($query, "name");
+    my @names;
+    my $result = dbQueryManyRows($query, "name");
+    print Dumper($result);
+    my %resultHash = %{$result};
+    for my $name (keys(%resultHash))
+    {
+      push(@names,$name);
+    }  
+
+    return \@names;
 }
  
 # Logs out all currently logged in members
