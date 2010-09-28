@@ -84,10 +84,10 @@ sub whosInLab
 
     # fetch all people who are currently IN
     say("The following people are in the lab");
-    my @peoplePresent = database::getWhosInLab();
+    my @peoplePresent = @{database::getWhosInLab()};
     for my $person (@peoplePresent)
     {
-        say $person;
+        say($person);
     }
 }
 
