@@ -69,16 +69,14 @@ sub sayHello
 sub identifyPerson
 {
     say("Now scan person");
-
+    $gLastCommandScanned = "identify"; 
     # TODO - probably maintain some nasty gloabl state for this command...
 }
 
 sub removeLastEntry
 {
-
-    # Find last entry
-    # Remove the entry
-    say("Entry blah has been removed");
+    my $lastEntry =  database::removeLastEntry();
+    say("Entry for $lastEntry has been removed");
 }
 
 sub whosInLab
@@ -109,6 +107,12 @@ sub ignoreScan
     return 0;
 }
 
+
+# The main barcode handling code
+# Called each time a barcode is read
+# There are two main categories of barcodes - people and command.
+# IN:  a barcode to handle
+# OUT: nothing
 sub handleBarcode
 {
     my ($barcode)   = @_;
@@ -121,6 +125,7 @@ sub handleBarcode
         # Found a person
         say( "Hello " . $peopleHash{$barcode} );
 
+        # Can't remeber what this is for...
         if ( ignoreScan($barcode) )
         {
             say("Ignoring");
@@ -129,10 +134,20 @@ sub handleBarcode
 
         my $state = database::getState($barcode);
         say("State $state");
+        
+        if ($gLastCommandScanned ne "identify")
+        {
+          database::flipState($barcode, $state);
+        }
 
+        # Finished dealing with a person, no longer care about the lastCommand
+        $gLastCommandScanned = "";
     }
     elsif ( $commandHash{$barcode} )
-    {
+    {   
+        # Clear the last command run, as we're now running another command
+        $gLastCommandScanned = "";
+
         &{ $commandHash{$barcode} };
         print("Found a command");
     }
@@ -144,6 +159,7 @@ sub handleBarcode
 
 # Say some text
 # IN:  the text to speak
+# OUT: Nothing
 sub say
 {
     my ($barcode) = @_;
