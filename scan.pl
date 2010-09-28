@@ -12,6 +12,7 @@ open( PORT, "/dev/ttyUSB0" );
 
 my $currentString = "";
 
+# Main program loop. Reads data from barcode scanner character by character
 while (1)
 {
     my $char;
@@ -19,6 +20,7 @@ while (1)
 
     if ( $char =~ /\r/ )
     {
+        # \r marks the end of a complete scan.
         chomp($currentString);
         print "BARCODE|$currentString|";
         handleBarcode($currentString);
@@ -33,23 +35,20 @@ while (1)
 
 close PORT;
 
-#Return hash of barcodes to person ID
+
+my $gLastPersonScanned;
+my $gLastCommandScanned;
+
+
+# Return hash of barcodes to person ID
+# 
 sub getPeopleHash
 {
-#    my %peopleHash = (
-#        '1001' => '1',
-#        '1002' => '2',
-#        '1003' => '3',
-#    );
-#
-#    return \%peopleHash;
-return database::getPersonList();
-
+    return database::getPersonList();
 }
 
 sub getCommandHash
 {
-
     # Maps command barcodes onto routines
     my %commandHash = (
         '000000084062'  => \&sayHello,
@@ -87,9 +86,8 @@ sub whosInLab
 
     # fetch all people who are currently IN
     say("The following people are in the lab");
-
-    my @test = ("Tom");
-    for my $person (@test)
+    my @peoplePresent = database::getWhosInLab();
+    for my $person (@peoplePresent)
     {
         say $person;
     }
@@ -97,21 +95,17 @@ sub whosInLab
 
 sub logAllOut
 {
-
     # fetch all people who are currently IN
-    my @test = ("Tom");
-    for my $person (@test)
-    {
-        say("logged $person out");
-    }
-
-    #logout($person);
+    # Say who's in the lab, then log them all out.
+    whosInLab();
+    database::logAllOut();
+    say("Logging everyone out");
 }
 
 sub ignoreScan
 {
-
     #Do database lookup
+    
     return 0;
 }
 
@@ -125,7 +119,7 @@ sub handleBarcode
     {
 
         # Found a person
-        say("Hello " . $peopleHash{$barcode});
+        say( "Hello " . $peopleHash{$barcode} );
 
         if ( ignoreScan($barcode) )
         {
@@ -134,13 +128,13 @@ sub handleBarcode
         }
 
         my $state = database::getState($barcode);
-say("State $state");
+        say("State $state");
 
     }
     elsif ( $commandHash{$barcode} )
     {
         &{ $commandHash{$barcode} };
-        say("Found a command");
+        print("Found a command");
     }
     else
     {
@@ -148,6 +142,8 @@ say("State $state");
     }
 }
 
+# Say some text
+# IN:  the text to speak
 sub say
 {
     my ($barcode) = @_;
@@ -172,4 +168,3 @@ sub initSerial
     $PortObj->write_settings || undef $PortObj;
 }
 
-## Please see file perltidy.ERR
