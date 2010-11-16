@@ -18,9 +18,9 @@ while (1)
     my $char;
     read( PORT, $char, 1 );
 
-    if ( $char =~ /\r/ )
+    if ( $char =~ /\n/ )
     {
-        # \r marks the end of a complete scan.
+        # \n marks the end of a complete scan.
         chomp($currentString);
         print "BARCODE|$currentString|";
         handleBarcode($currentString);
@@ -121,7 +121,6 @@ sub handleBarcode
 
     if ( $peopleHash{$barcode} )
     {
-
         # Found a person
         say( "Hello " . $peopleHash{$barcode} );
 
