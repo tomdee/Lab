@@ -3,13 +3,14 @@ package database;
 use DBI;
 use Data::Dumper;
 use strict;
+use warnings;
 my $dbh;
 
 dbConnect();
 
 #print Dumper(getPersonFromCode("123456789"));
 #print Dumper(getState("1000000000000"));
-flipState("5010123729981", 'IN');
+#flipState("5010123729981", 'IN');
 
 # Find the current state for a given barcode
 # IN:  a barcode

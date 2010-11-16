@@ -121,9 +121,6 @@ sub handleBarcode
 
     if ( $peopleHash{$barcode} )
     {
-        # Found a person
-        say( "Hello " . $peopleHash{$barcode} );
-
         # Can't remeber what this is for...
         if ( ignoreScan($barcode) )
         {
@@ -132,7 +129,14 @@ sub handleBarcode
         }
 
         my $state = database::getState($barcode);
-        say("State $state");
+	if ( $state eq 'IN' )
+        {
+		say( "Goodbye " . $peopleHash{$barcode} );
+	}
+	else
+	{
+		say( "Hello " . $peopleHash{$barcode} );
+	}
         
         if ($gLastCommandScanned ne "identify")
         {
