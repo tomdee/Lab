@@ -4,11 +4,20 @@ use warnings;
 use database;
 use Data::Dumper;
 
-print Dumper( database::getPersonList() );
+# print Dumper( database::getPersonList() );
 
-initSerial();
 
-open( PORT, "/dev/ttyUSB0" );
+my $n = -1;
+
+while ($n < 10) {
+    $n++;
+
+    print "Trying port..." . $n . "\n";
+    initSerial($n);
+    open( PORT, "/dev/ttyUSB" . $n) or next;
+    print "Opened port..." . $n . "\n";
+    last;
+}
 
 my $currentString = "";
 
@@ -37,7 +46,7 @@ close PORT;
 
 
 my $gLastPersonScanned;
-my $gLastCommandScanned;
+my $gLastCommandScanned = "";
 
 
 # Return hash of barcodes to person ID
@@ -173,9 +182,11 @@ sub say
 
 sub initSerial
 {
-    my $PortName = "/dev/ttyUSB0";
+    my ($portNumber) = @_;
+
+    my $PortName = "/dev/ttyUSB" . $n;
     my $PortObj  = Device::SerialPort->new($PortName)
-      || die "Can't open $PortName: $!\n";
+      || return;
 
     # $PortObj->user_msg(ON);
     $PortObj->databits(8);
